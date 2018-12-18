@@ -1,7 +1,7 @@
-(defun membrep (l1 l2)
-  (cond ((atom l2) nil)
-        ((equal l1 (car l2)) t)
-        (t (membrep l1 (cdr l2)))
+(defun membrep (e l)
+  (cond ((atom l) nil)
+        ((equal e (car l)) t)
+        (t (membrep e (cdr l)))
   )
 )
 
@@ -111,8 +111,8 @@
 (setq regleDiagnosticAsthme (make-regle
   :nom "regle diagnostic asthme"
   :poids 2
-  :condition '(membrep difficultes_respiratoire liste_symptomes)
-  :action (cons 'asthme '(liste_pathologies)) )
+  :condition '(membrep 'difficultes_respiratoire liste_symptomes)
+  :action '(setq liste_pathologies (cons 'asthme liste_pathologies)))
 )
 
 (setq regleDiagnosticInflammation (make-regle
@@ -125,7 +125,7 @@
 
 ; Symptomes disponibles : rougeur gonflement sensationChaleur difficultesRespiratoire
 ; Base de faits :
-(setq liste_symptomes (list 'difficultesRespiratoire))
+(setq liste_symptomes (list 'difficultes_respiratoire))
 (setq liste_pathologies ())
 (setq liste_medicaments ())
 (setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme))
@@ -150,9 +150,8 @@
  
    ; On effectue l'action associé à la règle en tète de liste
    (setq regle (car liste_regles_en_conflit))
-   (print (regle-action regle))
-   (retireElementListe regle liste_regles)
+   (print regle)
+   (setq liste_regles (retireElementListe regle liste_regles))
 )
 
 (print "DONE")
-(print (eval (regle-condition regleDiagnosticAsthme)))
