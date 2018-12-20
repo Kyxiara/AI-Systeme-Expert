@@ -8,6 +8,7 @@
 
 (defstruct symptome
    nom 
+   intensité
 )
 
 (defstruct pathologie 
@@ -94,6 +95,7 @@
 
 (setq douleur (make-symptome
                   :nom "douleur"
+                  :intensité 2
               )
 )
     
@@ -121,9 +123,15 @@
 (setq regleAdministrationIbuprofene (make-regle
   :nom "regle administration Ibuprofène"
   :poids 1
-  :condition '(or (membrep 'inflammation liste_pathologies) (membrep 'douleur liste_symptomes))
+  :condition '(or (membrep 'inflammation liste_pathologies) (and (membrep 'douleur liste_symptomes) (< 3 (symptome-intensité douleur))))
   :action '(setq liste_medicaments (cons 'ibuprofene liste_medicaments)))
 )
+
+(setq regleAdministrationParacetamol (make-regle
+  :nom "regle administration Paracetamol"
+  :poids 0
+  :condition '(and (membrep 'douleur liste_symptomes) (<= (symptome-intensité douleur) 3))
+  :action '(setq liste_medicaments (cons 'paracetamol liste_medicaments))))
 
 ;------- Regles Symptomes -------
 
@@ -143,12 +151,12 @@
 
 ;------- Listes (état du monde) -------
 
-; Symptomes disponibles : douleur, rougeur, gonflement, sensationChaleur, difficultesRespiratoire
+; Symptomes disponibles : douleur, rougeur, gonflement, sensation_chaleur, difficultes_respiratoire
 ; Base de faits :
-(setq liste_symptomes (list 'gonflement 'rougeur))
+(setq liste_symptomes (list 'gonflement 'rougeur 'difficultes_respiratoire 'douleur))
 (setq liste_pathologies ())
 (setq liste_medicaments ())
-(setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme regleAdministrationIbuprofene))
+(setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme regleAdministrationIbuprofene regleAdministrationParacetamol))
 (setq liste_regles_en_conflit ())
 
     
