@@ -1,32 +1,55 @@
-(defun membrep (l1 l2)
-  (cond ((atom l2) nil)
-        ((equal l1 (car l2)) t)
-        (t (membrep l1 (cdr l2)))
-  )
-)
+;------- Structures -------
 
-(defun trouveReglesActivables (listeRegles listeReglesActivables)
-  (cond ((atom listeRegles) listeReglesActivables)
-        ((regle-condition (car listeRegles)) (append (car listeRegles) listeReglesActivables) (trouveReglesActivables (cdr listeRegles) listeReglesActivables))
-        (t (membrep l1 (cdr l2)))
-  )
-)
-
-(defun compareRegleGT (r1 r2)
-    (cond ((> (regle-poids r1) (regle-poids r2)) r1)
-          (t r2)
-    )
-)
-
-    
-
-;------------------------------------------
-    
 (defstruct medicament 
    nom
    dose
    type
 )
+
+(defstruct symptome
+   nom 
+)
+
+(defstruct pathologie 
+   nom 
+)
+
+(defstruct regle
+    nom
+    poids
+    condition
+    action
+)
+
+;------- Fonctions -------
+
+(defun membrep (e l)
+  (cond ((atom l) nil)
+        ((equal e (car l)) t)
+        (t (membrep e (cdr l)))
+  )
+)
+
+(defun trouveReglesActivables (listeRegles listeReglesActivables)
+  (cond ((atom listeRegles) listeReglesActivables)
+        ((eval (regle-condition (car listeRegles))) (trouveReglesActivables (cdr listeRegles) (cons (car listeRegles) listeReglesActivables)))
+        (t (trouveReglesActivables (cdr listeRegles) listeReglesActivables))
+  )
+)
+
+(defun compareRegleGT (r1 r2)
+    (cond ((> (regle-poids r1) (regle-poids r2)) nil)
+          (t t)
+    )
+)
+
+(defun retireElementListe (element liste)
+    (cond ((atom liste) ())
+        ((equal (regle-nom element) (regle-nom (car liste))) (retireElementListe element (cdr liste)))
+        (T (cons (car liste) (retireElementListe element (cdr liste))))))
+  
+
+;------- Medicaments -------
 
 (setq ibuprofene (make-medicament
   :nom "Ibuprofene"
@@ -46,11 +69,7 @@
   :type "bronchodilatateur")
 )
     
-;------------------------------------------
-
-(defstruct symptome
-   nom 
-)
+;------- Symptomes -------
 
 (setq rougeur (make-symptome
                   :nom "rougeur"
@@ -72,11 +91,7 @@
               )
 )
     
-;------------------------------------------
-    
-(defstruct pathologie 
-   nom 
-)
+;------- Pathologies -------
     
 (setq inflammation (make-pathologie
   :nom "inflammation"
@@ -88,67 +103,70 @@
   )
 )
     
-;------------------------------------------
-    
-(defstruct regle
-    nom
-    poids
-    condition
-    action
-)
+;------- Regles Medicament -------
 
-(setq regle1 (make-regle
-  :nom "Regle 1"
+(setq regleAdministrationVentoline (make-regle
+  :nom "regle administration Ventoline"
   :poids 1
-  :condition (membrep 'asthme '(liste_pathologies))
-  :action ventoline )
+  :condition '(membrep 'asthme liste_pathologies)
+  :action '(setq liste_medicaments (cons 'ventoline liste_medicaments)))
 )
 
-(setq regle2 (make-regle
-  :nom "Regle 2"
+(setq regleAdministrationIbuprofene (make-regle
+  :nom "regle administration Ventoline"
+  :poids 1
+  :condition '(membrep 'inflammation liste_pathologies)
+  :action '(setq liste_medicaments (cons 'ibuprofene liste_medicaments)))
+)
+
+;------- Regles Symptomes -------
+
+(setq regleDiagnosticAsthme (make-regle
+  :nom "regle diagnostic asthme"
   :poids 2
-  :condition 'difficultes_respiratoire
-  :action (cons 'asthme '(liste_pathologies)) )
+  :condition '(membrep 'difficultes_respiratoire liste_symptomes)
+  :action '(setq liste_pathologies (cons 'asthme liste_pathologies)))
 )
 
-(setq regle3 (make-regle
-  :nom "Regle 3"
-  :poids 3
-  :condition 'rougeur
-  :action (cons 'inflammation '(liste_pathologies)) )
+(setq regleDiagnosticInflammation (make-regle
+  :nom "regle diagnostic inflammation"
+  :poids 2
+  :condition '(membrep 'rougeur liste_symptomes)
+  :action '(setq liste_pathologies (cons 'inflammation liste_pathologies)))
 )
-;------------------------------------------
+
+;------- Listes (état du monde) -------
 
 ; Symptomes disponibles : rougeur gonflement sensationChaleur difficultesRespiratoire
 ; Base de faits :
-;(setq liste_symptomes ('difficultesRespiratoire))
+(setq liste_symptomes (list 'difficultes_respiratoire 'rougeur))
 (setq liste_pathologies ())
 (setq liste_medicaments ())
-(setq liste_regles (list regle3 regle2 regle1))
+(setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme))
 (setq liste_regles_en_conflit ())
 
     
-; Moteur d'inférence
-
-(setq ARRET nil)
+;------- Moteur d'inférences -------
 
 (loop
-   ; Vérification de la condition d'arret
-    (when '(not ARRET) (return nil))
-   ; Détermination de l'ensemble des conflits
-     
-   ; On trie la liste des conflits en fonction du poid des règles
-     ;TODO
-   ; On effectue l'action associé à la règle en tète de liste
-     ;TODO
-   
-)
+    ; Détermination de l'ensemble des conflits
+    (setq liste_regles_en_conflit (trouveReglesActivables liste_regles ()))
+      
+    ; On trie la liste des conflits en fonction du poid des règles (le poid le plus grand en premier)
+    (setq liste_regles_en_conflit (sort liste_regles_en_conflit #'compareRegleGT))
+    ; Vérification de la condition d'ARRET
+    (when (atom liste_regles_en_conflit) (return nil))
+  
+    ; On effectue l'action associé à la règle en tète de liste
+    (setq regle_courante (car liste_regles_en_conflit))
+    (eval (regle-action regle_courante))
+    (print "regle exécutée :")
+    (print (regle-nom regle_courante))
+    ; Une fois la règle effectuée on l'enlève de la liste des règles
+    (setq liste_regles (retireElementListe regle_courante liste_regles)))
 
-
-;(print (compareRegleGT regle1 regle2))
-(print (sort liste_regles
-      (lambda (x y) (< (regle-poids x) (regle-poids y)))))
-
-;(print (sort liste_regles #'compareRegleGT))
-;(print liste_regles)
-;(print (eval (regle-nom (compareregleGT )))
+(print "LOOP DONE")
+(print "pathologies detectées :")
+(print liste_pathologies)
+(print "prescription :")
+(print liste_medicaments)
