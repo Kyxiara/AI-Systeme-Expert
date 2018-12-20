@@ -91,6 +91,11 @@
                   :nom "difficultes respiratoires"
               )
 )
+
+(setq douleur (make-symptome
+                  :nom "douleur"
+              )
+)
     
 ;------- Pathologies -------
     
@@ -116,7 +121,7 @@
 (setq regleAdministrationIbuprofene (make-regle
   :nom "regle administration Ibuprofène"
   :poids 1
-  :condition '(membrep 'inflammation liste_pathologies)
+  :condition '(or (membrep 'inflammation liste_pathologies) (membrep 'douleur liste_symptomes))
   :action '(setq liste_medicaments (cons 'ibuprofene liste_medicaments)))
 )
 
@@ -132,15 +137,15 @@
 (setq regleDiagnosticInflammation (make-regle
   :nom "regle diagnostic inflammation"
   :poids 2
-  :condition '(membrep 'rougeur liste_symptomes)
+  :condition '(and (membrep 'rougeur liste_symptomes) (membrep 'gonflement liste_symptomes))
   :action '(setq liste_pathologies (cons 'inflammation liste_pathologies)))
 )
 
 ;------- Listes (état du monde) -------
 
-; Symptomes disponibles : rougeur gonflement sensationChaleur difficultesRespiratoire
+; Symptomes disponibles : douleur, rougeur, gonflement, sensationChaleur, difficultesRespiratoire
 ; Base de faits :
-(setq liste_symptomes (list 'difficultes_respiratoire 'rougeur))
+(setq liste_symptomes (list 'gonflement 'rougeur))
 (setq liste_pathologies ())
 (setq liste_medicaments ())
 (setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme regleAdministrationIbuprofene))
