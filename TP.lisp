@@ -16,7 +16,7 @@
 
 (defstruct regle
     nom
-    poids
+    poids  ;plus le poid est élevé, plus la règle a de l'importance
     condition
     action
 )
@@ -37,8 +37,9 @@
   )
 )
 
+;va servir pour trier les règles dans l'ordre décroissant (sur le poid)
 (defun compareRegleGT (r1 r2)
-    (cond ((> (regle-poids r1) (regle-poids r2)) nil)
+    (cond ((< (regle-poids r1) (regle-poids r2)) nil)
           (t t)
     )
 )
@@ -52,7 +53,7 @@
 ;------- Medicaments -------
 
 (setq ibuprofene (make-medicament
-  :nom "Ibuprofene"
+  :nom "Ibuprofène"
   :dose 1
   :type "anti-inflamatoire")
 )
@@ -113,7 +114,7 @@
 )
 
 (setq regleAdministrationIbuprofene (make-regle
-  :nom "regle administration Ventoline"
+  :nom "regle administration Ibuprofène"
   :poids 1
   :condition '(membrep 'inflammation liste_pathologies)
   :action '(setq liste_medicaments (cons 'ibuprofene liste_medicaments)))
@@ -142,7 +143,7 @@
 (setq liste_symptomes (list 'difficultes_respiratoire 'rougeur))
 (setq liste_pathologies ())
 (setq liste_medicaments ())
-(setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme))
+(setq liste_regles (list regleDiagnosticInflammation regleAdministrationVentoline regleDiagnosticAsthme regleAdministrationIbuprofene))
 (setq liste_regles_en_conflit ())
 
     
