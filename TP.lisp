@@ -17,7 +17,7 @@
 
 (defstruct regle
     nom
-    poids  ;plus le poid est élevé, plus la règle a de l'importance
+    poids  ; Plus le poids est élevé, plus la règle a de l'importance
     condition
     action
 )
@@ -38,7 +38,7 @@
   )
 )
 
-;va servir pour trier les règles dans l'ordre décroissant (sur le poid)
+; Nécessaire pour trier les règles dans l'ordre décroissant (sur le poids)
 (defun compareRegleGT (r1 r2)
     (cond ((< (regle-poids r1) (regle-poids r2)) nil)
           (t t)
